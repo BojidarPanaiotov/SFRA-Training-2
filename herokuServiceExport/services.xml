@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services xmlns="http://www.demandware.com/xml/impex/services/2014-09-26">
+    <service-profile service-profile-id="heroku.profile">
+        <timeout-millis>5000</timeout-millis>
+        <rate-limit-enabled>false</rate-limit-enabled>
+        <rate-limit-calls>0</rate-limit-calls>
+        <rate-limit-millis>0</rate-limit-millis>
+        <cb-enabled>true</cb-enabled>
+        <cb-calls>0</cb-calls>
+        <cb-millis>0</cb-millis>
+    </service-profile>
+
+    <service-credential service-credential-id="heroku.credentials">
+        <url>https://russian-rest-app.herokuapp.com</url>
+        <user-id>admin</user-id>
+        <password masked="true">********</password>
+        <custom-attributes>
+            <custom-attribute attribute-id="PP_API_IsProduction">false</custom-attribute>
+            <custom-attribute attribute-id="PP_API_UseCertificate">false</custom-attribute>
+        </custom-attributes>
+    </service-credential>
+
+    <service service-id="heroku.customer.service">
+        <service-type>HTTP</service-type>
+        <enabled>true</enabled>
+        <log-prefix/>
+        <comm-log-enabled>true</comm-log-enabled>
+        <force-prd-enabled>false</force-prd-enabled>
+        <mock-mode-enabled>false</mock-mode-enabled>
+        <profile-id>heroku.profile</profile-id>
+        <credential-id>heroku.credentials</credential-id>
+    </service>
+</services>
