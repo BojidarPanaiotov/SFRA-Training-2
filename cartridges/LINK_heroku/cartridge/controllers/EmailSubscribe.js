@@ -12,14 +12,22 @@ server.replace('Subscribe', function (req, res, next) {
     var email = req.form.emailId;
     var isValidEmailid;
     if (email) {
-        isValidEmailid = validateEmail(email);
+        isValidEmailid = /^[\w.%+-]+@[\w.-]+\.[\w]{2,6}$/.test(email);
 
         if (isValidEmailid) {
-            //Heroku Service
             if(HookMgr.hasHook('custom.customer.data')){
-                HookMgr.callHook('custom.customer.data',
+                var result = HookMgr.callHook('custom.customer.data',
                 'saveEmailSubscription',
                 email);
+
+                if(!result){
+                    res.json({
+                        error: true,
+                        msg: Resource.msg('subscribe.email.invalid', 'homePage', null)
+                    });
+
+                    return next();
+                }
             }
             hooksHelper('app.mailingList.subscribe', 'subscribe', [email], function () {});
             res.json({
@@ -41,10 +49,5 @@ server.replace('Subscribe', function (req, res, next) {
 
     next();
 });
-
-function validateEmail(email) {
-    var regex = /^[\w.%+-]+@[\w.-]+\.[\w]{2,6}$/;
-    return regex.test(email);
-}
 
 module.exports = server.exports();

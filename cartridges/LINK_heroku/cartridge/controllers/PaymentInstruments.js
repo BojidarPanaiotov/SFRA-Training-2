@@ -29,7 +29,7 @@ server.replace('SavePayment', csrfProtection.validateAjaxRequest, function (req,
             var wallet = customer.getProfile().getWallet();
 
             if (HookMgr.hasHook('custom.customer.data')) {
-                HookMgr.callHook('custom.customer.data',
+                var result = HookMgr.callHook('custom.customer.data',
                     'saveUserCard',
                     formInfo.cardNumber,
                     formInfo.cardType,
@@ -38,7 +38,15 @@ server.replace('SavePayment', csrfProtection.validateAjaxRequest, function (req,
                     formInfo.expirationMonth,
                     formInfo.expirationYear,
                     formInfo.securityCode == null ? null : formInfo.securityCode,
-                    customerNo)
+                    customerNo);
+
+                    if(true){
+                        res.json({
+                            success: false,
+                        });
+
+                        return next();
+                    }
             }
 
             Transaction.wrap(function () {

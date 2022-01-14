@@ -171,12 +171,12 @@ server.replace('PlaceOrder', server.middleware.https, function (req, res, next) 
 
     // Places the order
     if (HookMgr.hasHook('custom.customer.data')) {
-        HookMgr.callHook('custom.customer.data',
+        var result = HookMgr.callHook('custom.customer.data',
             'saveOrderData',
-            currentBasket.customer.profile.customerNo,
-            currentBasket.customer.profile.firstName + ' ' + currentBasket.customer.profile.lastName,
-            currentBasket.customer.profile.phoneHome,
-            currentBasket.customer.profile.email,
+            currentBasket.customerNo,
+            currentBasket.defaultShipment.shippingAddress.fullName,
+            currentBasket.defaultShipment.shippingAddress.phone,
+            currentBasket.customerEmail,
             currentBasket.defaultShipment.shippingAddress.address1,
             currentBasket.defaultShipment.shippingAddress.address2,
             currentBasket.defaultShipment.shippingAddress.city,
@@ -188,6 +188,14 @@ server.replace('PlaceOrder', server.middleware.https, function (req, res, next) 
             currentBasket.billingAddress.postalCode,
             currentBasket.billingAddress.countryCode.value,
             order.paymentInstrument.creditCardHolder);
+
+            if(!result){
+                res.json({
+                    error: true,
+                    errorMessage: Resource.msg('error.technical', 'checkout', null)
+                });
+                return next();
+            }
     }
     var placeOrderResult = COHelpers.placeOrder(order, fraudDetectionStatus);
     if (placeOrderResult.error) {

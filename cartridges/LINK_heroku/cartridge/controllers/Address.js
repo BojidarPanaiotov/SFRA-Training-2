@@ -28,11 +28,10 @@ server.replace('SaveAddress', csrfProtection.validateAjaxRequest, function (req,
         this.on('route:BeforeComplete', function () { // eslint-disable-line no-shadow
             var formInfo = res.getViewData();
 
-            //Heroku Service
             var herokuServiceExist = HookMgr.hasHook('custom.customer.data');
 
             if (req.querystring.addressId && herokuServiceExist) {
-                HookMgr.callHook('custom.customer.data',
+                var result = HookMgr.callHook('custom.customer.data',
                     'updateAddress',
                     formInfo.queryString.split('=')[1],
                     formInfo.addressId,
@@ -46,8 +45,15 @@ server.replace('SaveAddress', csrfProtection.validateAjaxRequest, function (req,
                     formInfo.states.stateCode,
                     formInfo.phone
                 );
+
+                if (!result) {
+                    prepareErrorJsonResponse('error.message.error.heroku.update', formInfo, addressForm);
+
+                    return;
+                }
+
             } else if (!addressBook.getAddress(formInfo.addressId) && herokuServiceExist) {
-                HookMgr.callHook('custom.customer.data',
+                var result = HookMgr.callHook('custom.customer.data',
                     'saveUserAddress',
                     customerNo,
                     formInfo.addressId,
@@ -61,6 +67,12 @@ server.replace('SaveAddress', csrfProtection.validateAjaxRequest, function (req,
                     formInfo.states.stateCode,
                     formInfo.phone
                 );
+
+                if (!result) {
+                    prepareErrorJsonResponse('error.message.error.heroku.create', formInfo, addressForm);
+
+                    return;
+                }
             }
             Transaction.wrap(function () {
                 var address = null;
@@ -90,14 +102,7 @@ server.replace('SaveAddress', csrfProtection.validateAjaxRequest, function (req,
                         redirectUrl: URLUtils.url('Address-List').toString()
                     });
                 } else {
-                    formInfo.addressForm.valid = false;
-                    formInfo.addressForm.addressId.valid = false;
-                    formInfo.addressForm.addressId.error =
-                        Resource.msg('error.message.idalreadyexists', 'forms', null);
-                    res.json({
-                        success: false,
-                        fields: formErrors.getFormErrors(addressForm)
-                    });
+                    prepareErrorJsonResponse('error.message.idalreadyexists', formInfo, addressForm)
                 }
             });
         });
@@ -110,4 +115,13 @@ server.replace('SaveAddress', csrfProtection.validateAjaxRequest, function (req,
     return next();
 });
 
+function prepareErrorJsonResponse(messagePath, formInfo, addressForm) {
+    formInfo.addressForm.valid = false;
+    formInfo.addressForm.addressId.valid = false;
+    formInfo.addressForm.addressId.error = Resource.msg(messagePath, 'forms', null);
+    res.json({
+        success: false,
+        fields: formErrors.getFormErrors(addressForm)
+    });
+}
 module.exports = server.exports();

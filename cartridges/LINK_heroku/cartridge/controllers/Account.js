@@ -79,7 +79,6 @@ server.replace(
                     var login = registrationForm.email;
                     var password = registrationForm.password;
 
-                    //Heroku Service
                     var HerokuService = HookMgr.callHook('custom.customer.data',
                         'sendUserData',
                         registrationForm.firstName,
@@ -92,6 +91,7 @@ server.replace(
                     if (herokuServiceExists && !HerokuService) {
                         res.setStatusCode(404);
                         res.json({
+
                             success: false,
                             errorMessage: Resource.msg('error.message.unable.to.create.account', 'login', null)
                         });
@@ -106,10 +106,20 @@ server.replace(
 
                                 if (herokuServiceExists) {
                                     // Heroku Service attepmpt to write the heroku ID
-                                    var customerNumberHeroku = HookMgr.callHook('custom.customer.data',
+                                    var addCustomerNo = HookMgr.callHook('custom.customer.data',
                                         'addCustomerNumber',
                                         login,
                                         newCustomer.profile.customerNo);
+
+                                    if (!addCustomerNo) {
+                                        res.setStatusCode(404);
+                                        res.json({
+                                            success: false,
+                                            errorMessage: Resource.msg('error.message.unable.to.create.account', 'login', null)
+                                        });
+
+                                        return;
+                                    }
                                 }
 
                                 var authenticateCustomerResult = CustomerMgr.authenticateCustomer(login, password);
@@ -275,7 +285,7 @@ server.replace(
                         formInfo.email,
                         formInfo.phone);
                 }
-                
+
                 if (customerLogin) {
                     Transaction.wrap(function () {
                         profile.setFirstName(formInfo.firstName);
@@ -344,20 +354,18 @@ server.replace(
         res.render('account/accountDashboard', {
             account: accountModel,
             accountlanding: true,
-            breadcrumbs: [
-                {
-                    htmlValue: Resource.msg('global.home', 'common', null),
-                    url: URLUtils.home().toString()
-                }
-            ],
+            breadcrumbs: [{
+                htmlValue: Resource.msg('global.home', 'common', null),
+                url: URLUtils.home().toString()
+            }],
             reportingURLs: reportingURLs,
             payment: accountModel.payment,
             viewSavedPaymentsUrl: URLUtils.url('PaymentInstruments-List').toString(),
             addPaymentUrl: URLUtils.url('PaymentInstruments-AddPayment').toString()
         });
 
-        if(HookMgr.hasHook('custom.customer.data')){
-            HookMgr.callHook('custom.customer.data','getUser',customer.profile.customerNo);
+        if (HookMgr.hasHook('custom.customer.data')) {
+            HookMgr.callHook('custom.customer.data', 'getUser', customer.profile.customerNo);
         }
         next();
     }
